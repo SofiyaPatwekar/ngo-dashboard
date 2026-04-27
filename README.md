@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚨 ImpactAI — AI NGO Command Center Dashboard
 
-## Getting Started
+An AI-powered crisis management dashboard designed to help NGOs **monitor, analyze, and respond to real-time incidents efficiently**.
 
-First, run the development server:
+---
 
-```bash
+## 🌐 Live Demo
+
+🔗 https://ngo-dashboard-160660418360.asia-south1.run.app
+
+---
+
+## 🧠 Overview
+
+ImpactFlow is a **real-time decision support system** that integrates:
+
+* Incident reporting
+* Volunteer coordination
+* Resource management
+* AI-driven insights
+
+All into a single **intelligent command center dashboard**.
+
+---
+
+## ✨ Key Features
+
+### 📊 Real-Time Dashboard
+
+* Live KPI tracking (reports, volunteers, resources)
+* AI-powered overview of crisis status
+
+### 🗺️ Interactive Map Intelligence
+
+* Visualize incidents, volunteers, and assignments
+* Zone-based hotspot detection
+* Location → coordinates conversion using geocoding
+
+### 🤖 AI Decision Support
+
+* Priority alerts for critical situations
+* Predictive insights based on demand vs supply
+* AI reasoning for transparency
+
+### 📁 Smart Data Collection
+
+* Manual report generation
+* Document upload & AI-based extraction
+* Auto-filled forms using processed data
+
+### 👥 Volunteer & Resource Management
+
+* Track volunteer availability
+* Assign tasks dynamically
+* Monitor resource demand and shortages
+
+### 📝 Support & Help System
+
+* Issue tracking for internal team
+* Structured support request handling
+
+---
+
+## 🏗️ Tech Stack
+
+### 🎨 Frontend
+
+* Next.js (App Router)
+* React
+* TypeScript
+* Tailwind CSS
+
+### 🔥 Backend & Database
+
+* Firebase (Firestore + Authentication)
+
+### ☁️ Cloud & Deployment
+
+* Google Cloud Run
+* Docker
+
+### 🗺️ Maps & Location
+
+* Google Maps JavaScript API
+* Geocoding API
+
+### 🤖 AI Integration
+
+* External AI APIs for document processing
+* Rule-based + AI-driven logic
+
+
+## ⚙️ Setup Instructions
+
+### 1. Clone the repo
+
+git clone https://github.com/SofiyaPatwekar/ngo-dashboard.git
+cd ngo-dashboard
+
+### 2. Install dependencies
+
+npm install
+
+### 3. Add environment variables
+
+Create a ".env.local" file:
+
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key
+
+NEXT_PUBLIC_FIREBASE_API_KEY=your_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+### 4. Run locally
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Deployed using **Google Cloud Run** with containerized architecture.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔮 Future Scope
 
-## Learn More
+* Adaptive AI learning based on historical data
+* Offline-first functionality for low-connectivity regions
+* Multilingual & voice-based reporting
+* Integration with government & weather APIs
+* Real-time notification system (SMS/WhatsApp)
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
