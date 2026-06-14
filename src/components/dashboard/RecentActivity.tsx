@@ -5,7 +5,7 @@ import { useState } from "react";
 function getDotColor(priority?: string) {
   if (priority === "critical") return "bg-red-500";
   if (priority === "high") return "bg-orange-400";
-  if (priority === "medium") return "bg-amber-400";
+  if (priority === "medium") return "bg-amber-300";
   return "bg-[#4d7c56]";
 }
 
@@ -92,7 +92,7 @@ function ActivityList({
           const priority =
             report.priority ||
             report.priority_level ||
-            report.severity ||
+            report.severity_level ||
             "medium";
 
           return (
@@ -182,7 +182,7 @@ function ActivityModal({
                 const priority =
                   report.priority ||
                   report.priority_level ||
-                  report.severity ||
+                  report.severity_level ||
                   "medium";
 
                 return (

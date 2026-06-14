@@ -6,24 +6,31 @@ import { KPICards } from "./KPICards";
 import { PriorityAlertHeatmap } from "./PriorityAlertHeatmap";
 import { AIInsightsImpact } from "./AIInsightsImpact";
 import { RecentActivity } from "./RecentActivity";
-import { DeploymentBanner } from "./DeploymentBanner";
-
+import { useCommandCenterAlerts } from "@/hooks/useCommandCenterAlerts";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useRealtimeReports } from "@/hooks/useRealtimeReports";
 import { useOperationalData } from "@/hooks/useOperationalData";
 import { useRealtimeStore } from "@/store/useRealtimeStore";
+import { useRecommendations } from "@/hooks/useRecommendations";
 
 export function DashboardPage() {
   const [briefingOpen, setBriefingOpen] = useState(false);
 
   const { data, isLoading, error } = useDashboard();
+ 
   const { latestReport, latestDecision, latestAssignment } =
     useOperationalData();
+  const { data: recommendations = [] } =
+  useRecommendations();
+const  { data: alerts = [] } = useCommandCenterAlerts();
+const safeAlerts = Array.isArray(alerts) ? alerts : [];
+ 
 
   useRealtimeReports();
 
   const reports = useRealtimeStore((s) => s.reports);
   const summary = data?.[0];
+
 
   if (isLoading) return <div className="p-6">Loading dashboard...</div>;
   if (error) return <div className="p-6 text-red-600">Error loading dashboard</div>;
@@ -54,12 +61,16 @@ export function DashboardPage() {
         <KPICards summary={summary} latestDecision={latestDecision} />
       </div>
 
+{/* <CommandCenterAlerts alerts={alerts} /> */}
+
+
       <PriorityAlertHeatmap
-        summary={summary}
-        latestReport={latestReport}
-        latestDecision={latestDecision}
-        latestAssignment={latestAssignment}
-      />
+  summary={summary}
+  latestReport={latestReport}
+  latestDecision={latestDecision}
+  latestAssignment={latestAssignment}
+  recommendations={recommendations}
+/>
 
       <AIInsightsImpact summary={summary} />
 
@@ -161,6 +172,60 @@ className="h-8 w-8 rounded-xl bg-white text-gray-500 hover:text-gray-900 hover:b
             Close
           </button>
         </div>
+      </div>
+    </div>
+  );
+
+}
+function CommandCenterAlerts({ alerts }: { alerts: any[] }) {
+  return (
+    <div className="card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="section-label">Command center alerts</p>
+        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">
+          {alerts.length} alerts
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        {alerts.length === 0 ? (
+          <p className="text-sm text-gray-400">No active alerts.</p>
+        ) : (
+          alerts.map((alert) => <AlertRow key={alert.id} alert={alert} />)
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AlertRow({ alert }: { alert: any }) {
+  const strip =
+    alert.severity === "high"
+      ? "bg-red-500"
+      : alert.severity === "medium"
+      ? "bg-amber-400"
+      : "bg-green-500";
+
+  const badge =
+    alert.severity === "high"
+      ? "bg-red-50 text-red-700"
+      : alert.severity === "medium"
+      ? "bg-amber-50 text-amber-700"
+      : "bg-green-50 text-green-700";
+
+  return (
+    <div className="flex items-stretch rounded-lg border border-gray-100 bg-white overflow-hidden">
+      <div className={`w-1 flex-shrink-0 ${strip}`} />
+      <div className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0">
+        <span
+          className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full flex-shrink-0 ${badge}`}
+        >
+          {alert.severity}
+        </span>
+        <p className="text-sm text-gray-800 truncate flex-1">{alert.message}</p>
+        <span className="text-xs text-gray-400 flex-shrink-0 capitalize">
+          {alert.alert_type}
+        </span>
       </div>
     </div>
   );

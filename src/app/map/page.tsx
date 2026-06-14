@@ -381,7 +381,7 @@ function MapLegend({ activeLayer }: { activeLayer: MapLayer }) {
         <LegendItem color="bg-red-500" label="Medical report" />
         <LegendItem color="bg-orange-400" label="Food report" />
         <LegendItem color="bg-purple-500" label="Shelter report" />
-        <LegendItem color="bg-gray-400" label="General report" />
+        <LegendItem color="bg-blue-400" label="General report" />
       </>
     );
   }

@@ -2,6 +2,8 @@
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useInsights } from "@/hooks/useInsights";
+import { useEffect, useState } from "react";
+import { getReportTrend } from "@/services/reportService";
 
 export default function InsightsPage() {
   return (
@@ -14,6 +16,15 @@ export default function InsightsPage() {
 function InsightsContent() {
   const { data = [], isLoading } = useInsights();
   const insights = data?.[0];
+  type TrendPoint = { label: string; value: number };
+
+
+const [trendData, setTrendData] = useState<TrendPoint[]>([]);
+
+
+  useEffect(() => {
+    getReportTrend().then(setTrendData);
+  }, []);
 
   if (isLoading) return <div className="p-6">Loading insights...</div>;
   if (!insights) return <div className="p-6">No insights data found.</div>;
@@ -29,6 +40,7 @@ function InsightsContent() {
     (insights.priority_2_count ?? 0) +
     (insights.priority_3_count ?? 0);
 
+  console.log("INSIGHTS DATA:", insights);
   const riskScore = calculateRiskScore(insights);
   const aiSummary = generateAISummary(insights, riskScore);
   const signals = generateSignals(insights);
@@ -69,16 +81,22 @@ function InsightsContent() {
         />
       </div>
 
+ <CommandIntelligence
+        insights={insights}
+        riskScore={riskScore}
+        summary={aiSummary}
+        trendData={trendData}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-4">
         <CaseIntelligence insights={insights} totalCases={totalCases} />
         <PriorityBreakdown insights={insights} totalPriority={totalPriority} />
       </div>
 
-      <CommandIntelligence insights={insights} riskScore={riskScore} signals={signals} />
-
+     
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-4">
         <OperationsHealth insights={insights} />
-        <AISummary summary={aiSummary} insights={insights} riskScore={riskScore} />
+        <AISignalsCard signals={signals} />
       </div>
     </div>
   );
@@ -107,6 +125,102 @@ function Kpi({
       <p className="text-[12px] font-semibold text-gray-500">{title}</p>
       <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
       {sub && <p className="text-[11px] text-gray-400 mt-1">{sub}</p>}
+    </div>
+  );
+}
+
+function CommandIntelligence({
+  insights,
+  riskScore,
+  summary,
+  trendData,
+}: {
+  insights: any;
+  riskScore: number;
+  summary: string;
+  trendData: { label: string; value: number }[];
+}) {
+  const urgency = insights.average_urgency ?? 0;
+  const priority = insights.priority_1_count ?? 0;
+  const urgent = insights.urgent_assignments ?? 0;
+
+  const maxValue = Math.max(
+    ...trendData.map((d) => d.value),
+    1
+  );
+
+  const riskTone =
+    riskScore >= 75
+      ? "bg-red-100 text-red-700"
+      : riskScore >= 50
+      ? "bg-amber-100 text-amber-700"
+      : "bg-green-100 text-green-700";
+
+  return (
+    <div className="card p-5">
+      <div className="flex items-center justify-between mb-5">
+        <p className="section-label">Command Intelligence</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-5">
+        <div>
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <Mini label="Urgency" value={urgency} />
+            <Mini label="P1 Cases" value={priority} />
+            <Mini label="Urgent Tasks" value={urgent} />
+          </div>
+
+        <div className="h-40 rounded-2xl bg-[#f2f7f3] border border-[#e0ede2] p-4">
+  <div className="flex items-end gap-3 h-28">
+    {trendData.map((item, i) => (
+      <div
+        key={i}
+        className="group relative flex-1 flex flex-col items-center gap-2 h-full justify-end"
+      >
+        {/* Tooltip */}
+        <div className="pointer-events-none absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-10">
+          {item.label}: {item.value} report{item.value === 1 ? "" : "s"}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+        </div>
+
+        <div
+          className={`w-full rounded-t-xl transition-opacity group-hover:opacity-80 ${
+            item.value >= 10
+              ? "bg-red-400"
+              : item.value >= 5
+              ? "bg-amber-400"
+              : "bg-[#4d7c56]"
+          }`}
+          style={{
+            height: `${Math.max((item.value / maxValue) * 100, 18)}%`,
+          }}
+        />
+
+        <span className="text-[10px] text-gray-400">{item.label}</span>
+      </div>
+    ))}
+  </div>
+</div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-100 bg-[#f2f7f3] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-bold text-gray-900">AI Situation Summary</p>
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${riskTone}`}>
+              {riskScore >= 75 ? "High Risk" : riskScore >= 50 ? "Moderate Risk" : "Stable"}
+            </span>
+          </div>
+
+          <p className="text-sm text-gray-700 leading-relaxed">{summary}</p>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Info label="Busiest Zone" value={insights.busiest_zone || "N/A"} />
+            <Info label="Top Category" value={formatLabel(insights.top_category || "N/A")} />
+            <Info label="Pending" value={insights.pending_assignments ?? 0} />
+            <Info label="Updated" value={formatTime(insights.last_updated)} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -185,103 +299,7 @@ function PriorityBreakdown({ insights, totalPriority }: { insights: any; totalPr
   );
 }
 
-function CommandIntelligence({
-  insights,
-  riskScore,
-  signals,
-}: {
-  insights: any;
-  riskScore: number;
-  signals: string[];
-}) {
-  const urgency = insights.average_urgency ?? 0;
-  const priority = insights.priority_1_count ?? 0;
-  const urgent = insights.urgent_assignments ?? 0;
 
-  const trendPoints = [
-    Math.max(25, urgency - 25),
-    Math.max(30, urgency - 18),
-    Math.max(35, urgency - 10),
-    Math.max(40, urgency - 4),
-    urgency,
-  ];
-
-  return (
-    <div className="card p-5">
-      <div className="flex items-center justify-between mb-5">
-        <p className="section-label">Command Intelligence</p>
-        <span
-          className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-            riskScore >= 75
-              ? "bg-red-100 text-red-700"
-              : riskScore >= 50
-              ? "bg-amber-100 text-amber-700"
-              : "bg-green-100 text-green-700"
-          }`}
-        >
-          {riskScore >= 75 ? "Escalating" : riskScore >= 50 ? "Watch" : "Stable"}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-5">
-        <div>
-          <div className="grid grid-cols-3 gap-3 mb-5">
-            <Mini label="Urgency" value={urgency} />
-            <Mini label="P1 Cases" value={priority} />
-            <Mini label="Urgent Tasks" value={urgent} />
-          </div>
-
-          <div className="h-40 rounded-2xl bg-[#f2f7f3] border border-[#e0ede2] p-4">
-            <div className="flex items-end gap-3 h-28">
-              {trendPoints.map((point, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                  <div
-                    className={`w-full rounded-t-xl ${
-                      point >= 80 ? "bg-red-400" : point >= 55 ? "bg-amber-400" : "bg-[#4d7c56]"
-                    }`}
-                    style={{ height: `${Math.max(point, 18)}%` }}
-                  />
-                  <span className="text-[10px] text-gray-400">
-                    {i === 4 ? "Now" : `${4 - i}h`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-gray-100 bg-white p-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-bold text-gray-900">AI Signals</p>
-            <span className="text-xs font-semibold text-[#4d7c56]">
-              {signals.length} active
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {signals.length === 0 ? (
-              <div className="rounded-xl bg-green-50 border border-green-100 p-3">
-                <p className="text-sm font-semibold text-green-700">
-                  No major anomaly detected
-                </p>
-              </div>
-            ) : (
-              signals.map((signal, index) => (
-                <div
-                  key={index}
-                  className="rounded-xl bg-white border border-gray-100 p-3 flex items-start gap-3"
-                >
-                  <span className="mt-1 h-2 w-2 rounded-full bg-amber-400 flex-shrink-0" />
-                  <p className="text-sm font-medium text-gray-700">{signal}</p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function OperationsHealth({ insights }: { insights: any }) {
   const availableVolunteers = insights.available_volunteer_count ?? 0;
@@ -308,38 +326,34 @@ function OperationsHealth({ insights }: { insights: any }) {
   );
 }
 
-function AISummary({
-  summary,
-  insights,
-  riskScore,
-}: {
-  summary: string;
-  insights: any;
-  riskScore: number;
-}) {
-  const riskTone =
-    riskScore >= 75
-      ? "bg-red-100 text-red-700"
-      : riskScore >= 50
-      ? "bg-amber-100 text-amber-700"
-      : "bg-green-100 text-green-700";
-
+function AISignalsCard({ signals }: { signals: string[] }) {
   return (
-    <div className="card p-5 bg-gradient-to-r from-[#f2f7f3] to-white border border-[#e0ede2]">
+    <div className="card p-5">
       <div className="flex items-center justify-between mb-4">
-        <p className="section-label">AI Situation Summary</p>
-        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${riskTone}`}>
-          {riskScore >= 75 ? "High Risk" : riskScore >= 50 ? "Moderate Risk" : "Stable"}
+        <p className="section-label">AI Signals</p>
+        <span className="text-xs font-semibold text-[#4d7c56]">
+          {signals.length} active
         </span>
       </div>
 
-      <p className="text-sm text-gray-700 leading-relaxed">{summary}</p>
-
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <Info label="Busiest Zone" value={insights.busiest_zone || "N/A"} />
-        <Info label="Top Category" value={formatLabel(insights.top_category || "N/A")} />
-        <Info label="Pending" value={insights.pending_assignments ?? 0} />
-        <Info label="Updated" value={formatTime(insights.last_updated)} />
+      <div className="space-y-2">
+        {signals.length === 0 ? (
+          <div className="rounded-xl bg-green-50 border border-green-100 p-3">
+            <p className="text-sm font-semibold text-green-700">
+              No major anomaly detected
+            </p>
+          </div>
+        ) : (
+          signals.map((signal, index) => (
+            <div
+              key={index}
+              className="rounded-xl bg-white border border-gray-100 p-3 flex items-start gap-3"
+            >
+              <span className="mt-1 h-2 w-2 rounded-full bg-amber-400 flex-shrink-0" />
+              <p className="text-sm font-medium text-gray-700">{signal}</p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -377,27 +391,27 @@ function Info({ label, value }: { label: string; value: any }) {
 }
 
 function calculateRiskScore(insights: any) {
-  const urgency = insights.average_urgency ?? 0; // already 0–100
+  if (!insights) return 0;
 
   const priority = insights.priority_1_count ?? 0;
   const urgent = insights.urgent_assignments ?? 0;
   const lowStock = insights.low_stock_resource_count ?? 0;
 
-  // Normalize counts (tune these max values based on your system)
-  const priorityNorm = Math.min(priority / 20, 1);   // max 20 cases
-  const urgentNorm = Math.min(urgent / 15, 1);       // max 15 assignments
-  const stockNorm = Math.min(lowStock / 5, 1);       // max 5 shortages
+  const avgUrgency = insights.average_urgency ?? 0;
 
-  // Normalize urgency to 0–1
-  const urgencyNorm = urgency / 100;
+  const urgencyNorm = avgUrgency / 100;
+
+  const priorityNorm = Math.min(priority / 50, 1);
+  const urgentNorm = Math.min(urgent / 50, 1);
+  const stockNorm = Math.min(lowStock / 10, 1);
 
   const score =
-    urgencyNorm * 0.4 +
-    priorityNorm * 0.2 +
-    urgentNorm * 0.2 +
-    stockNorm * 0.2;
+    urgencyNorm * 40 +
+    priorityNorm * 30 +
+    urgentNorm * 20 +
+    stockNorm * 10;
 
-  return Math.round(score * 100);
+  return Math.round(score);
 }
 
 function generateAISummary(insights: any, riskScore: number) {

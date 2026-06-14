@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useAssignments } from "@/hooks/useAssignments";
 import { useResources } from "@/hooks/useResources";
+import { useCommandCenterAlerts } from "@/hooks/useCommandCenterAlerts";
 
 export default function ResourcesPage() {
   return (
@@ -17,7 +18,7 @@ function ResourcesContent() {
   const { data: dashboardData } = useDashboard();
   const { data: assignments = [] } = useAssignments();
   const { data: resources = [], isLoading } = useResources();
-
+  const { data: alerts = [] } = useCommandCenterAlerts();
   const summary = dashboardData?.[0];
 
   if (isLoading) return <div className="p-6">Loading resources...</div>;
@@ -90,9 +91,10 @@ function ResourcesContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-4">
         <ShortageForecast
-          summary={summary}
           resources={normalizedResources}
           demandMap={demandMap}
+          assignments={assignments}
+          alerts={alerts}
         />
 
         <ResourceAllocationPlan
@@ -196,86 +198,86 @@ function PredictiveAlert({
           resourceKey
         )} prioritized for high-risk zones.`;
 
- return (
-  <div className={`card p-5 bg-gradient-to-r border ${alertStyle}`}>
-    <div className="flex items-center justify-between mb-4">
-      <p className="section-label">AI Predictive Alert</p>
+  return (
+    <div className={`card p-5 bg-gradient-to-r border ${alertStyle}`}>
+      <div className="flex items-center justify-between mb-4">
+        <p className="section-label">AI Predictive Alert</p>
 
-      <span
-        className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
-          alertState === "critical"
-            ? "bg-red-100 text-red-700"
-            : alertState === "pressure"
-            ? "bg-amber-100 text-amber-700"
-            : "bg-green-100 text-green-700"
-        }`}
-      >
-        {alertState.toUpperCase()}
-      </span>
-    </div>
+        <span
+          className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+            alertState === "critical"
+              ? "bg-red-100 text-red-700"
+              : alertState === "pressure"
+              ? "bg-amber-100 text-amber-700"
+              : "bg-green-100 text-green-700"
+          }`}
+        >
+          {alertState.toUpperCase()}
+        </span>
+      </div>
 
-    <h3 className="text-lg font-bold text-gray-900">{alertTitle}</h3>
+      <h3 className="text-lg font-bold text-gray-900">{alertTitle}</h3>
 
-    <p className="text-sm text-gray-600 mt-2">
-      {formatLabel(resourceKey)} is required in {demandCount} assignment(s).
-      Current stock appears to be {stock}.
-    </p>
-
-    <div className="mt-4 rounded-xl bg-white border border-gray-100 p-4">
-      <p
-        className={`text-[11px] font-bold uppercase tracking-wider ${
-          alertState === "critical"
-            ? "text-red-600"
-            : alertState === "pressure"
-            ? "text-amber-700"
-            : "text-[#4d7c56]"
-        }`}
-      >
-        Recommended Action
+      <p className="text-sm text-gray-600 mt-2">
+        {formatLabel(resourceKey)} is required in {demandCount} assignment(s).
+        Current stock appears to be {stock}.
       </p>
 
-      <p className="text-sm text-gray-700 mt-1">{actionText}</p>
-    </div>
+      <div className="mt-4 rounded-xl bg-white border border-gray-100 p-4">
+        <p
+          className={`text-[11px] font-bold uppercase tracking-wider ${
+            alertState === "critical"
+              ? "text-red-600"
+              : alertState === "pressure"
+              ? "text-amber-700"
+              : "text-[#4d7c56]"
+          }`}
+        >
+          Recommended Action
+        </p>
 
-    <div className="mt-4 flex flex-wrap gap-3 text-xs">
-      <span className="rounded-full bg-white px-3 py-1 font-semibold text-gray-600">
-        Demand: {demandCount}
-      </span>
-      <span className="rounded-full bg-white px-3 py-1 font-semibold text-gray-600">
-        Stock: {stock}
-      </span>
-      <span
-        className={`rounded-full px-3 py-1 font-semibold ${
+        <p className="text-sm text-gray-700 mt-1">{actionText}</p>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-3 text-xs">
+        <span className="rounded-full bg-white px-3 py-1 font-semibold text-gray-600">
+          Demand: {demandCount}
+        </span>
+        <span className="rounded-full bg-white px-3 py-1 font-semibold text-gray-600">
+          Stock: {stock}
+        </span>
+        <span
+          className={`rounded-full px-3 py-1 font-semibold ${
+            alertState === "critical"
+              ? "bg-red-100 text-red-700"
+              : alertState === "pressure"
+              ? "bg-amber-100 text-amber-700"
+              : "bg-green-100 text-green-700"
+          }`}
+        >
+          Gap: {shortage}
+        </span>
+      </div>
+
+      {/* <button
+        type="button"
+        onClick={() => {
+          alert(
+            `Allocation request created for ${formatLabel(resourceKey)}.\nDemand: ${demandCount}\nStock: ${stock}\nGap: ${shortage}`
+          );
+        }}
+        className={`mt-5 w-full rounded-xl px-4 py-3 text-sm font-bold transition ${
           alertState === "critical"
-            ? "bg-red-100 text-red-700"
+            ? "bg-red-600 text-white hover:bg-red-700"
             : alertState === "pressure"
-            ? "bg-amber-100 text-amber-700"
-            : "bg-green-100 text-green-700"
+            ? "bg-amber-500 text-white hover:bg-amber-600"
+            : "bg-[#2e5233] text-white hover:bg-[#3a6142]"
         }`}
       >
-        Gap: {shortage}
-      </span>
+        Allocate {formatLabel(resourceKey)}
+      </button> */}
     </div>
-
-    <button
-      type="button"
-      onClick={() => {
-        alert(
-          `Allocation request created for ${formatLabel(resourceKey)}.\nDemand: ${demandCount}\nStock: ${stock}\nGap: ${shortage}`
-        );
-      }}
-      className={`mt-5 w-full rounded-xl px-4 py-3 text-sm font-bold transition ${
-        alertState === "critical"
-          ? "bg-red-600 text-white hover:bg-red-700"
-          : alertState === "pressure"
-          ? "bg-amber-500 text-white hover:bg-amber-600"
-          : "bg-[#2e5233] text-white hover:bg-[#3a6142]"
-      }`}
-    >
-      Allocate {formatLabel(resourceKey)}
-    </button>
-  </div>
-);
+  );
 }
 
 function DemandSummary({
@@ -332,60 +334,220 @@ function DemandSummary({
   );
 }
 
+// ── Per-resource AI pressure scoring ────────────────────────────────────────
+function computeResourceForecast(
+  resource: any,
+  demandMap: Record<string, number>,
+  assignments: any[],
+  alerts: any[]
+) {
+  const key = normalizeKey(resource.cleanName);
+  const demand = demandMap[key] || 0;
+  const stock = resource.quantity ?? 0;
+
+  // Pending assignments tied to this resource (not yet deployed/completed)
+  const pendingAssignments = assignments.filter((a: any) => {
+    const resKey = normalizeKey(a.recommended_resource || "");
+    return (
+      resKey === key &&
+      a.deployment_status !== "deployed" &&
+      a.deployment_status !== "completed"
+    );
+  }).length;
+
+  // Command center alerts referencing this resource by name
+  const relevantAlerts = alerts.filter((alert: any) => {
+    const msg = (alert.message || "").toLowerCase();
+    return msg.includes((resource.cleanName || "").toLowerCase());
+  });
+
+  const alertScore = relevantAlerts.reduce((max: number, a: any) => {
+    const s = a.severity === "high" ? 30 : a.severity === "medium" ? 15 : 5;
+    return Math.max(max, s);
+  }, 0);
+
+  // Demand pressure (0-40): demand relative to available stock
+  const demandScore =
+    demand === 0
+      ? 0
+      : stock === 0
+      ? 40
+      : Math.min(40, Math.round((demand / stock) * 40));
+
+  // Pipeline pressure (0-20): pending assignments queued against this resource
+  const pipelineScore = Math.min(20, pendingAssignments * 7);
+
+  // Stock floor (0-20): baseline pressure from raw inventory status,
+  // even if no demand has been recorded yet
+  const stockFloor =
+    resource.status === "out_of_stock" ? 20 : resource.status === "low_stock" ? 8 : 0;
+
+  const pressureScore = Math.min(
+    100,
+    demandScore + pipelineScore + alertScore + stockFloor
+  );
+
+  const riskLevel: "High" | "Medium" | "Low" =
+    pressureScore >= 70 ? "High" : pressureScore >= 40 ? "Medium" : "Low";
+
+  const reasonParts: string[] = [];
+  if (demand > 0) {
+    reasonParts.push(
+      `${demand} assignment${demand > 1 ? "s" : ""} require this resource`
+    );
+  }
+  if (pendingAssignments > 0) {
+    reasonParts.push(
+      `${pendingAssignments} pending dispatch${pendingAssignments > 1 ? "es" : ""}`
+    );
+  }
+  if (stock === 0) {
+    reasonParts.push("stock is fully depleted");
+  } else if (resource.status === "low_stock") {
+    reasonParts.push(`only ${stock} unit(s) remain`);
+  }
+  if (relevantAlerts.length > 0) {
+    reasonParts.push("flagged by command center");
+  }
+
+  const reasoning =
+    reasonParts.length > 0
+      ? reasonParts.join("; ") + "."
+      : "No significant pressure detected.";
+
+  const action =
+    riskLevel === "High"
+      ? `Restock ${resource.cleanName} immediately to avoid dispatch delays.`
+      : riskLevel === "Medium"
+      ? `Monitor ${resource.cleanName} and prepare reserve stock.`
+      : `${resource.cleanName} is stable. No action required.`;
+
+  return {
+    id: resource.id,
+    name: resource.cleanName,
+    stock,
+    demand,
+    pendingAssignments,
+    pressureScore,
+    riskLevel,
+    reasoning,
+    action,
+    alertFlagged: relevantAlerts.length > 0,
+    latestAlert: relevantAlerts[0],
+  };
+}
+
 function ShortageForecast({
-  summary,
   resources,
   demandMap,
+  assignments,
+  alerts,
 }: {
-  summary: any;
   resources: any[];
   demandMap: Record<string, number>;
+  assignments: any[];
+  alerts: any[];
 }) {
-  const medicalCases = summary?.medical_cases ?? 0;
-  const foodCases = summary?.food_cases ?? 0;
-  const shelterCases = summary?.shelter_cases ?? 0;
+  const forecasts = resources
+    .map((r: any) => computeResourceForecast(r, demandMap, assignments, alerts))
+    .sort((a, b) => b.pressureScore - a.pressureScore);
 
-  const riskScore = Math.min(
-    100,
-    medicalCases * 5 + foodCases * 3 + shelterCases * 3
-  );
-
-  const criticalItems = resources.filter(
-    (r: any) => r.status === "out_of_stock" || r.quantity <= 10
-  );
-
-  const topDemandResource = Object.entries(demandMap).sort(
-    (a, b) => b[1] - a[1]
-  )[0]?.[0];
+  const criticalCount = forecasts.filter((f) => f.riskLevel === "High").length;
+  const topForecasts = forecasts.slice(0, 4);
 
   return (
     <div className="card p-5">
-      <p className="section-label mb-4">AI Shortage Forecast</p>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-sm text-gray-500">Risk Score</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{riskScore}%</p>
-          <p className="text-xs text-gray-400 mt-1">
-            Based on medical, food, and shelter demand.
-          </p>
-        </div>
-
-        <div>
-          <p className="text-sm text-gray-500">Critical Inventory</p>
-          <p className="text-3xl font-bold text-red-600 mt-1">
-            {criticalItems.length}
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            Resources need attention.
-          </p>
-        </div>
+      <div className="flex items-center justify-between mb-4">
+        <p className="section-label">AI Shortage Forecast</p>
+        <span className="text-xs font-semibold text-[#4d7c56]">
+          {criticalCount} critical
+        </span>
       </div>
 
-      <div className="mt-4 rounded-xl bg-[#f2f7f3] border border-[#e0ede2] p-3 text-sm text-gray-700">
-        AI predicts highest pressure on{" "}
-        <strong>{formatLabel(topDemandResource || "medical supplies")}</strong>{" "}
-        based on current assignment requirements.
+      {topForecasts.length === 0 ? (
+        <p className="text-sm text-gray-400">No resource data available.</p>
+      ) : (
+        <div className="space-y-3">
+          {topForecasts.map((f) => (
+            <ForecastRow key={f.id} forecast={f} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForecastRow({
+  forecast: f,
+}: {
+  forecast: {
+    id: string;
+    name: string;
+    stock: number;
+    demand: number;
+    pendingAssignments: number;
+    pressureScore: number;
+    riskLevel: "High" | "Medium" | "Low";
+    reasoning: string;
+    action: string;
+    alertFlagged: boolean;
+    latestAlert?: any;
+  };
+}) {
+  const stripColor =
+    f.riskLevel === "High"
+      ? "bg-red-500"
+      : f.riskLevel === "Medium"
+      ? "bg-amber-400"
+      : "bg-green-400";
+
+  const badgeColor =
+    f.riskLevel === "High"
+      ? "bg-red-50 text-red-700"
+      : f.riskLevel === "Medium"
+      ? "bg-amber-50 text-amber-700"
+      : "bg-green-50 text-green-700";
+
+  const barColor =
+    f.riskLevel === "High"
+      ? "bg-red-400"
+      : f.riskLevel === "Medium"
+      ? "bg-amber-400"
+      : "bg-green-400";
+
+  return (
+    <div className="flex items-stretch rounded-xl border border-gray-100 bg-white overflow-hidden">
+      <div className={`w-1 flex-shrink-0 ${stripColor}`} />
+      <div className="flex flex-col gap-1.5 px-3 py-2.5 flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold text-gray-800 truncate">
+            {f.name}
+          </span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-xs text-gray-400">{f.stock} in stock</span>
+            <span
+              className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${badgeColor}`}
+            >
+              {f.riskLevel}
+            </span>
+            <span className="text-xs font-bold text-gray-600">
+              {f.pressureScore}/100
+            </span>
+          </div>
+        </div>
+
+        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full ${barColor}`}
+            style={{ width: `${f.pressureScore}%` }}
+          />
+        </div>
+
+        <p className="text-xs text-gray-500">{f.reasoning}</p>
+
+        {f.riskLevel !== "Low" && (
+          <p className="text-xs font-medium text-gray-700 mt-0.5">{f.action}</p>
+        )}
       </div>
     </div>
   );

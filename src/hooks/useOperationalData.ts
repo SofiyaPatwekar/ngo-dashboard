@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getLatestReport } from "@/services/reportServide";
+import { getLatestReport } from "@/services/reportService";
 import { getLatestDecision } from "@/services/decisionService";
 import { getLatestAssignment } from "@/services/assignmentService";
 

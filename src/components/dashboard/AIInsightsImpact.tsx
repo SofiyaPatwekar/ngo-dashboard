@@ -10,21 +10,66 @@ export function AIInsightsImpact({ summary }: { summary: any }) {
   const availableResources = summary?.available_resources ?? 0;
   const lowStockResources = summary?.low_stock_resources ?? 0;
   const urgentPending = summary?.urgent_dispatch_pending ?? 0;
+  const HighestRiskZone = summary?.busiest_zone  ?? 0;
+  const AverageUrgency = summary?.average_urgency  ?? 0;
+  const TopCategory = summary?.top_category   ?? 0;
+
 
   // 📊 Derived metrics
-  const responseEfficiency =
-    totalReports > 0 ? Math.round((totalAssignments / totalReports) * 100) : 0;
+  // const responseEfficiency =
+  //   totalReports > 0 ? Math.round((totalAssignments / totalReports) * 100) : 0;
 
-  const medicalShare =
-    totalReports > 0 ? Math.round((medicalCases / totalReports) * 100) : 0;
+  // const medicalShare =
+  //   totalReports > 0 ? Math.round((medicalCases / totalReports) * 100) : 0;
 
-  // 🎨 Dynamic colors
-  const efficiencyColor =
-    responseEfficiency > 75
-      ? "#4d7c56"
-      : responseEfficiency > 40
-      ? "#f59e0b"
-      : "#ef4444";
+  // // 🎨 Dynamic colors
+  // const efficiencyColor =
+  //   responseEfficiency > 75
+  //     ? "#4d7c56"
+  //     : responseEfficiency > 40
+  //     ? "#f59e0b"
+  //     : "#ef4444";
+
+  // ===== Operational Impact Score =====
+
+const assignmentScore =
+  totalReports > 0
+    ? (totalAssignments / totalReports) * 40
+    : 0;
+
+const volunteerScore =
+  totalVolunteers > 0
+    ? ((totalVolunteers - urgentPending) /
+        totalVolunteers) *
+      30
+    : 0;
+
+const resourceScore =
+  availableResources > 0
+    ? ((availableResources - lowStockResources) /
+        availableResources) *
+      30
+    : 0;
+
+const operationalImpact = Math.min(
+  100,
+  Math.round(
+    assignmentScore +
+      volunteerScore +
+      resourceScore
+  )
+);
+
+const impactColor =
+  operationalImpact > 75
+    ? "#4d7c56"
+    : operationalImpact > 40
+    ? "#f59e0b"
+    : "#ef4444";
+
+  const circumference = 2 * Math.PI * 45;
+const progress =
+  circumference - (operationalImpact / 100) * circumference;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -69,26 +114,29 @@ export function AIInsightsImpact({ summary }: { summary: any }) {
     </div>
 
     {/* BOTTOM: Summary */}
-    <div className="flex items-end justify-between mt-4">
+    <div className="flex items-end justify-between ">
       <div>
-        <p className="text-[11px] text-gray-500">Medical Load</p>
+        <p className="text-[12px] text-gray-500">Top Category</p>
         <p className="text-xl font-bold text-gray-900">
-          {medicalShare}%
+     {TopCategory}
+         
         </p>
       </div>
 
       <div className="text-right">
-      <p className="text-[11px] text-gray-500">Urgent Pending</p>
+      <p className="text-[12px] text-gray-500">Highest Risk Zone</p>
         <p className="text-xl font-bold text-gray-900">
-          {urgentPending}
+         {HighestRiskZone}
         </p>
       </div>
 
-      {urgentPending > 0 && (
-        <span className="ml-2 px-2 py-0.5 text-[10px] rounded-md bg-red-500 text-white font-semibold">
-          ALERT
-        </span>
-      )}
+ <div>
+        <p className="text-[12px] text-gray-500">Average Urgency</p>
+        <p className="text-xl ml-2 px-2 py-0.5 font-semibold rounded-md bg-red-500 text-white font-semibold">
+     {AverageUrgency}%       
+        </p>
+      </div>
+
     </div>
   </div>
 </div>
@@ -106,28 +154,29 @@ export function AIInsightsImpact({ summary }: { summary: any }) {
                 cy="50"
                 r="45"
                 fill="none"
-                stroke="#e0ede2"
+stroke={"#e0ede2"}
                 strokeWidth="11"
               />
 
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke={efficiencyColor}
-                strokeWidth="11"
-                strokeDasharray={`${Math.min(responseEfficiency, 100) * 2.39} 239`}
-                strokeLinecap="round"
-              />
+             <circle
+  cx="50"
+  cy="50"
+  r="45"
+  fill="none"
+  stroke={impactColor}
+  strokeWidth="11"
+  strokeDasharray={circumference}
+  strokeDashoffset={progress}
+  strokeLinecap="round"
+/>
             </svg>
 
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-xl font-bold text-gray-900">
-                {Math.min(responseEfficiency, 100)}%
+{operationalImpact}%
               </span>
               <span className="text-[9px] text-gray-500 text-center">
-                Response<br />Efficiency
+                Operational<br />Impact
               </span>
             </div>
           </div>
@@ -161,6 +210,7 @@ export function AIInsightsImpact({ summary }: { summary: any }) {
                 </p>
               </div>
             </div>
+            
           </div>
         </div>
 

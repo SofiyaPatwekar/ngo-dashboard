@@ -9,6 +9,7 @@ import {
 } from "@react-google-maps/api";
 import { useQuery } from "@tanstack/react-query";
 
+
 const MAP_ENDPOINT =
   "https://asia-south1-ngo-dashboard-ade99.cloudfunctions.net/getMapData";
 
@@ -17,18 +18,31 @@ const defaultCenter = {
   lng: 72.9781,
 };
 
+type Recommendation = {
+  id: string;
+  title: string;
+  reason: string;
+  recommendation: string;
+  priority: string;
+  created_at:any;
+};
+
 export function PriorityAlertHeatmap({
   summary,
   latestReport,
   latestDecision,
   latestAssignment,
+  recommendations,
 }: {
   summary: any;
   latestReport: any;
   latestDecision: any;
   latestAssignment: any;
-}) {
+  recommendations: any[];
+}){
   const [selected, setSelected] = useState<any>(null);
+const [showRecommendations, setShowRecommendations] =
+  useState(false);
 
   const { data } = useQuery({
     queryKey: ["dashboard-map-data"],
@@ -48,6 +62,12 @@ export function PriorityAlertHeatmap({
   const volunteers = data?.volunteers ?? [];
   const mapSummary = data?.summary ?? {};
 
+const latestRecommendation =
+  recommendations?.[0] ?? null;
+
+console.log("Recommendations:", recommendations);
+console.log("Latest Recommendation:", latestRecommendation);
+
   const category = latestDecision?.category || latestReport?.category || "case";
 
   const urgency =
@@ -57,7 +77,7 @@ export function PriorityAlertHeatmap({
     summary?.urgent_dispatch_pending ??
     0;
 
-  const title = latestReport?.title || `High Priority ${category}`;
+
 
   const location =
     latestReport?.location_name ||
@@ -69,14 +89,16 @@ export function PriorityAlertHeatmap({
     mapSummary?.hotspot_zone ||
     "Current Zone";
 
-  const reasoning =
-    latestDecision?.reasoning ||
-    latestDecision?.explanation ||
-    "AI has flagged this case based on urgency and severity signals.";
+ const reasoning =
+  latestRecommendation?.reason ||
+  latestDecision?.reasoning ||
+  latestDecision?.explanation ||
+  "AI has flagged this case based on urgency and severity signals.";
 
-  const recommendation =
-    latestAssignment?.coordination_explanation ||
-    "Review and approve response deployment.";
+//  const recommendation =
+//   featuredRecommendation?.recommendation ||
+//   latestAssignment?.coordination_explanation ||
+//   "Review and approve response deployment.";
 
   const urgencyColor =
     urgency > 80
@@ -85,8 +107,40 @@ export function PriorityAlertHeatmap({
       ? "text-amber-500"
       : "text-green-500";
 
+      const priorityOrder: Record<string, number> = {
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+
+const sortedRecommendations = [...recommendations].sort((a, b) => {
+  const priorityDiff =
+    (priorityOrder[b.priority?.toLowerCase()] || 0) -
+    (priorityOrder[a.priority?.toLowerCase()] || 0);
+
+  if (priorityDiff !== 0) return priorityDiff;
+
+  return (
+    (b.created_at?.toMillis?.() || 0) -
+    (a.created_at?.toMillis?.() || 0)
+  );
+});
+
+const featuredRecommendation = sortedRecommendations[0];
+
+const otherRecommendations = sortedRecommendations.slice(1);
+
+const recommendation =
+  featuredRecommendation?.recommendation ||
+  latestAssignment?.coordination_explanation ||
+  "Review and approve response deployment.";
+const title =
+  featuredRecommendation?.title ||
+  latestReport?.title ||
+  `High Priority ${category}`;
+
   const dashboardMarkers = useMemo(() => {
-    const reportMarkers = reports.slice(0, 6).map((r: any) => ({
+    const reportMarkers = reports.map((r: any) => ({
       ...r,
       markerType: "Report",
       title: r.title || r.category || r.location_name || "Incident Report",
@@ -96,7 +150,7 @@ export function PriorityAlertHeatmap({
       color: r.marker_color || "red",
     }));
 
-    const assignmentMarkers = assignments.slice(0, 4).map((a: any) => ({
+    const assignmentMarkers = assignments.map((a: any) => ({
       ...a,
       markerType: "Assignment",
       title: a.location_name || a.category || "AI Assignment",
@@ -106,7 +160,7 @@ export function PriorityAlertHeatmap({
       color: a.marker_color || "yellow",
     }));
 
-    const volunteerMarkers = volunteers.slice(0, 4).map((v: any) => ({
+    const volunteerMarkers = volunteers.map((v: any) => ({
       ...v,
       markerType: "Volunteer",
       title: v.name || v.volunteer_name || "Volunteer",
@@ -132,7 +186,30 @@ export function PriorityAlertHeatmap({
         lng: Number(first.longitude),
       };
     }
+const priorityOrder: Record<string, number> = {
+  high: 3,
+  medium: 2,
+  low: 1,
+};
 
+const sortedRecommendations = [...recommendations].sort((a, b) => {
+  const priorityDiff =
+    (priorityOrder[b.priority] || 0) -
+    (priorityOrder[a.priority] || 0);
+
+  if (priorityDiff !== 0) return priorityDiff;
+
+  return (
+    b.created_at?.toMillis?.() -
+    a.created_at?.toMillis?.()
+  );
+});
+
+const featuredRecommendation =
+  sortedRecommendations[0];
+
+const otherRecommendations =
+  sortedRecommendations.slice(1);
     return defaultCenter;
   }, [dashboardMarkers]);
 
@@ -140,8 +217,16 @@ export function PriorityAlertHeatmap({
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.15fr] gap-4">
       {/* LEFT ALERT */}
       <div className="card p-5 flex flex-col gap-4">
-        <p className="section-label">AI Priority Alert</p>
+                  <div className="flex items-center justify-between">
 
+        <p className="section-label">AI Priority Alert</p>
+  <button
+    onClick={() => setShowRecommendations(true)}
+    className="text-[12px] font-bold text-[#f6fff7] hover:underline bg-[#3a6142] border border-[#e0ede2] py-2 px-5 rounded-full"
+  >
+    View All Recommendations →
+  </button>
+  </div>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-xl">
             🚨
@@ -149,29 +234,58 @@ export function PriorityAlertHeatmap({
 
           <div>
             <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-            <p className="text-[12px] text-gray-500 mt-1">{location}</p>
+            {/* <p className="text-[12px] text-gray-500 mt-1">{location}</p> */}
           </div>
+
         </div>
+        
 
         <p className="text-[13px] text-gray-600 leading-relaxed">
-          {reasoning.length > 145 ? reasoning: reasoning}
-        </p>
+{featuredRecommendation?.reason ||
+  reasoning}        </p>
 
         <div className="bg-[#f2f7f3] rounded-xl p-4 border border-[#e0ede2]">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#4d7c56] mb-2">
-            AI Recommendation
-          </p>
+          <div className="flex items-center justify-between">
+  <p className="text-[10px] font-bold uppercase tracking-widest text-[#4d7c56]">
+    AI Recommendation
+  </p>
+  
+</div>
 
           <p className="text-[13px] font-semibold text-gray-800">
             {recommendation}
           </p>
 
           <div className="flex items-center gap-4 mt-3 text-[12px] text-gray-600">
-            <span>
-              Urgency: <span className={urgencyColor}>{urgency}</span>
-            </span>
-            <span>Category: {formatLabel(category)}</span>
-          </div>
+  <span>
+    Priority:
+    <span
+      className={`ml-1 font-semibold ${
+        featuredRecommendation?.priority === "high"
+          ? "text-red-600"
+          : featuredRecommendation?.priority === "medium"
+          ? "text-amber-500"
+          : "text-green-600"
+      }`}
+    >
+      {formatLabel(featuredRecommendation?.priority || "N/A")}
+    </span>
+  </span>
+
+  <span>
+    Created:
+    <span className="ml-1 font-semibold text-gray-800">
+      {featuredRecommendation?.created_at?.toDate?.().toLocaleDateString(
+        "en-IN",
+        {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }
+      ) || "N/A"}
+    </span>
+  </span>
+</div>
         </div>
 
         {/* <button className="w-full py-3 rounded-xl bg-[#2e5233] text-white font-semibold text-[13px] hover:bg-[#3a6142] transition-colors">
@@ -276,6 +390,65 @@ export function PriorityAlertHeatmap({
           </p>
         </div>
       </div>
+      {showRecommendations && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl overflow-hidden">
+      <div className="flex items-center justify-between p-5 border-b">
+        <h2 className="text-lg font-bold">
+          AI Recommendations
+        </h2>
+
+        <button
+          onClick={() => setShowRecommendations(false)}
+          className="text-gray-500 hover:text-black"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="max-h-[70vh] overflow-y-auto p-5 space-y-4">
+        {otherRecommendations.map((rec) => (
+  <div
+    key={rec.id}
+    className="rounded-xl border border-gray-200 p-4"
+  >
+    <div className="flex items-center justify-between mb-2">
+      <h4 className="font-semibold">
+        {rec.title}
+      </h4>
+
+      <span
+        className={`text-xs px-2 py-1 rounded-full ${
+          rec.priority === "high"
+            ? "bg-red-100 text-red-700"
+            : rec.priority === "medium"
+            ? "bg-amber-100 text-amber-700"
+            : "bg-green-100 text-green-700"
+        }`}
+      >
+        {rec.priority}
+      </span>
+    </div>
+
+    <p className="text-sm text-gray-600 mb-2">
+      {rec.reason}
+    </p>
+
+ <div className="bg-[#f2f7f3] p-3 rounded-xl">
+              <p className="text-sm text-gray-800">
+                Recommendation
+              </p>
+
+    <p className="text-sm font-medium text-[#2e5233]">
+      {rec.recommendation}
+    </p>
+    </div>
+  </div>
+))}
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

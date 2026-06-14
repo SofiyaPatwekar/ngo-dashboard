@@ -37,8 +37,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#eef4ee] px-4 font-[family-name:var(--font-dm-sans)]">
-      <div className="w-full max-w-3xl flex rounded-3xl overflow-hidden shadow-2xl shadow-green-900/10">
+    <div className="min-h-screen flex items-center justify-center bg-[#f4eef4] px-4 font-[family-name:var(--font-dm-sans)]">
+<div className="w-full max-w-3xl flex rounded-3xl overflow-hidden shadow-2xl shadow-green-900/10 my-8 h-154">
 
         {/* ── Left Panel ── */}
         <div className="hidden md:flex flex-col justify-between bg-[#1a3d22] p-10 w-80 shrink-0 relative overflow-hidden">
@@ -150,6 +150,33 @@ export default function LoginPage() {
                 </>
               )}
             </button>
+            <div className="mb-5 rounded-2xl border border-[#dcebdc] bg-[#f3faf3] p-4">
+  <p className="text-[11px] font-bold uppercase tracking-widest text-[#4d7c56] mb-2">
+     Login Credentials
+  </p>
+
+  <div className="space-y-1 text-sm text-[#1a2e1a]">
+    <p>
+      <span className="font-semibold">Email:</span>{" "}
+      <span className="font-mono">admin@gmail.com</span>
+    </p>
+    <p>
+      <span className="font-semibold">Password:</span>{" "}
+      <span className="font-mono">admin@123</span>
+    </p>
+  </div>
+
+  <button
+    type="button"
+    onClick={() => {
+      setEmail("admin@gmail.com");
+      setPassword("admin@123");
+    }}
+    className="mt-3 w-full rounded-xl border border-[#6B9E73] bg-white px-4 py-2 text-xs font-bold text-[#4d7c56] hover:bg-[#eaf4ea]"
+  >
+    Use Demo Credentials
+  </button>
+</div>
           </form>
 
           <p className="flex items-center justify-center gap-1.5 text-[#9ab89a] text-[11px] mt-6">
@@ -158,6 +185,7 @@ export default function LoginPage() {
             </svg>
             Secured with Firebase Auth · Admin only
           </p>
+          
         </div>
       </div>
     </div>
